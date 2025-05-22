@@ -1,18 +1,19 @@
-import { 
-  ApiResponse, 
-  AuthResponse, 
-  LoginRequest, 
-  RegisterRequest, 
-  AddCategoryRequest, 
+import axios, { AxiosRequestConfig } from "axios";
+import {
+  ApiResponse,
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  AddCategoryRequest,
   AddSubCategoryRequest,
   ProductFormData,
   User,
   Product,
-  Category
-} from '../types';
+  Category,
+} from "../types";
 
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = "http://localhost:5000";
 
 class ApiService {
   private baseURL: string;
@@ -20,162 +21,141 @@ class ApiService {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    // Get token from localStorage on initialization
-    this.token = localStorage.getItem('authToken');
+    this.token = localStorage.getItem("authToken");
   }
 
-  // Set authentication token
   setToken(token: string) {
     this.token = token;
-    localStorage.setItem('authToken', token);
+    localStorage.setItem("authToken", token);
   }
 
-  // Clear authentication token
   clearToken() {
     this.token = null;
-    localStorage.removeItem('authToken');
+    localStorage.removeItem("authToken");
   }
 
-  // Generic request method
+  // Generic request method using Axios
   private async request<T>(
-    endpoint: string, 
-    options: RequestInit = {}
+    endpoint: string,
+    options: AxiosRequestConfig = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
-    
-    const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.token && { Authorization: `Bearer ${this.token}` }),
-        ...options.headers,
-      },
-      ...options,
+    const headers = {
+      "Content-Type":
+        options.data instanceof FormData ? undefined : "application/json",
+      ...(this.token && { Authorization: `Bearer ${this.token}` }),
+      ...options.headers,
     };
 
     try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
+      const response = await axios({
+        url,
+        headers,
+        ...options,
+      });
 
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
+      return response.data;
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || error.message || "API request failed";
+      console.error("API request failed:", message);
+      throw new Error(message);
     }
   }
 
-  // Auth endpoints
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
+    const response = await this.request<AuthResponse>("/api/auth/login", {
+      method: "POST",
+      data: credentials,
     });
-    
     if (response.success && response.data) {
       this.setToken(response.data.token);
       return response.data;
     }
-    
-    throw new Error(response.message || 'Login failed');
+    throw new Error(response.message || "Login failed");
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
+    const response = await this.request<AuthResponse>("/api/auth/register", {
+      method: "POST",
+      data: userData,
     });
-    
     if (response.success && response.data) {
       this.setToken(response.data.token);
       return response.data;
     }
-    
-    throw new Error(response.message || 'Registration failed');
+    throw new Error(response.message || "Registration failed");
   }
 
-  // Product endpoints
   async addCategory(categoryData: AddCategoryRequest): Promise<Category> {
-    const response = await this.request<Category>('/api/product/add-category', {
-      method: 'POST',
-      body: JSON.stringify(categoryData),
+    const response = await this.request<Category>("/api/product/add-category", {
+      method: "POST",
+      data: categoryData,
     });
-    
     if (response.success && response.data) {
       return response.data;
     }
-    
-    throw new Error(response.message || 'Failed to add category');
+    throw new Error(response.message || "Failed to add category");
   }
 
-  async addSubCategory(subCategoryData: AddSubCategoryRequest): Promise<Category> {
-    const response = await this.request<Category>('/api/product/add-sub-category', {
-      method: 'POST',
-      body: JSON.stringify(subCategoryData),
-    });
-    
+  async addSubCategory(
+    subCategoryData: AddSubCategoryRequest
+  ): Promise<Category> {
+    const response = await this.request<Category>(
+      "/api/product/add-sub-category",
+      {
+        method: "POST",
+        data: subCategoryData,
+      }
+    );
     if (response.success && response.data) {
       return response.data;
     }
-    
-    throw new Error(response.message || 'Failed to add subcategory');
+    throw new Error(response.message || "Failed to add subcategory");
   }
 
-  async addProduct(productData: ProductFormData, images?: File[]): Promise<Product> {
-    // Create FormData for file upload
+  async addProduct(
+    productData: ProductFormData,
+    images?: File[]
+  ): Promise<Product> {
     const formData = new FormData();
-    
-    // Add product data
-    formData.append('title', productData.title);
-    formData.append('price', productData.price.toString());
-    formData.append('description', productData.description);
-    formData.append('category', productData.category);
-    formData.append('subcategory', productData.subcategory);
-    formData.append('variants', JSON.stringify(productData.variants));
-    
-    // Add images if provided
+    formData.append("title", productData.title);
+    formData.append("price", productData.price.toString());
+    formData.append("description", productData.description);
+    formData.append("category", productData.category);
+    formData.append("subcategory", productData.subcategory);
+    formData.append("variants", JSON.stringify(productData.variants));
     if (images && images.length > 0) {
-      images.forEach((image, index) => {
-        formData.append('images', image);
+      images.forEach((image) => {
+        formData.append("images", image);
       });
     }
 
-    const response = await this.request<Product>('/api/product/add-product', {
-      method: 'POST',
-      body: formData,
+    const response = await this.request<Product>("/api/product/add-product", {
+      method: "POST",
+      data: formData,
       headers: {
-        // Don't set Content-Type for FormData, let browser set it with boundary
         ...(this.token && { Authorization: `Bearer ${this.token}` }),
       },
     });
-    
     if (response.success && response.data) {
       return response.data;
     }
-    
-    throw new Error(response.message || 'Failed to add product');
+    throw new Error(response.message || "Failed to add product");
   }
 
-  // Get current user (if needed)
   async getCurrentUser(): Promise<User> {
-    const response = await this.request<User>('/api/auth/me');
-    
+    const response = await this.request<User>("/api/auth");
     if (response.success && response.data) {
       return response.data;
     }
-    
-    throw new Error(response.message || 'Failed to get user data');
+    throw new Error(response.message || "Failed to get user data");
   }
 
-  // Logout
   logout() {
     this.clearToken();
   }
 }
 
-// Create and export API service instance
 export const apiService = new ApiService(API_BASE_URL);
 export default apiService;

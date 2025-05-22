@@ -108,9 +108,6 @@ const SignInForm = () => {
         </button>
       </form>
       
-      <p className="text-center text-sm text-gray-600 mt-4">
-        Use email: admin@test.com, password: admin123 to test
-      </p>
     </div>
   );
 };
