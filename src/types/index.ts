@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -51,4 +50,36 @@ export interface ProductFormData {
   subcategory: string;
   variants: ProductVariant[];
   image: string;
+}
+
+// API Response types
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface AddCategoryRequest {
+  name: string;
+}
+
+export interface AddSubCategoryRequest {
+  categoryId: string;
+  name: string;
 }

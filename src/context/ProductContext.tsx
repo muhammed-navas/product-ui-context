@@ -1,6 +1,6 @@
-
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Product, Category, CartItem, ProductFormData } from '../types';
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { Product, Category, CartItem, ProductFormData } from "../types";
+import apiService from "../services/api";
 
 interface ProductContextType {
   products: Product[];
@@ -8,7 +8,7 @@ interface ProductContextType {
   cart: CartItem[];
   isLoading: boolean;
   error: string | null;
-  addProduct: (data: ProductFormData) => Promise<void>;
+  addProduct: (data: ProductFormData, images?: File[]) => Promise<void>;
   updateProduct: (id: string, data: ProductFormData) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   addCategory: (name: string) => Promise<void>;
@@ -23,76 +23,79 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 export const useProduct = () => {
   const context = useContext(ProductContext);
   if (!context) {
-    throw new Error('useProduct must be used within a ProductProvider');
+    throw new Error("useProduct must be used within a ProductProvider");
   }
   return context;
 };
 
 const initialProducts: Product[] = [
   {
-    id: '1',
-    title: 'HP AMD Ryzen 3',
+    id: "1",
+    title: "HP AMD Ryzen 3",
     price: 529.99,
-    description: 'The Ryzen 3 is a more high-end processor that compares to the Intel Core i3.',
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400',
-    category: 'Laptops',
-    subcategory: 'HP',
+    description:
+      "The Ryzen 3 is a more high-end processor that compares to the Intel Core i3.",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400",
+    category: "Laptops",
+    subcategory: "HP",
     variants: [
-      { ram: '4 GB', price: 529.99, quantity: 10 },
-      { ram: '8 GB', price: 629.99, quantity: 5 },
-      { ram: '16 GB', price: 729.99, quantity: 3 }
+      { ram: "4 GB", price: 529.99, quantity: 10 },
+      { ram: "8 GB", price: 629.99, quantity: 5 },
+      { ram: "16 GB", price: 729.99, quantity: 3 },
     ],
     inStock: true,
-    rating: 4.5
+    rating: 4.5,
   },
   {
-    id: '2',
-    title: 'HP AMD Ryzen 3',
+    id: "2",
+    title: "HP AMD Ryzen 3",
     price: 529.99,
-    description: 'The Ryzen 3 is a more high-end processor that compares to the Intel Core i3.',
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400',
-    category: 'Laptops',
-    subcategory: 'HP',
+    description:
+      "The Ryzen 3 is a more high-end processor that compares to the Intel Core i3.",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400",
+    category: "Laptops",
+    subcategory: "HP",
     variants: [
-      { ram: '4 GB', price: 529.99, quantity: 8 },
-      { ram: '8 GB', price: 629.99, quantity: 4 }
+      { ram: "4 GB", price: 529.99, quantity: 8 },
+      { ram: "8 GB", price: 629.99, quantity: 4 },
     ],
     inStock: true,
-    rating: 4.5
+    rating: 4.5,
   },
   {
-    id: '3',
-    title: 'HP AMD Ryzen 3',
+    id: "3",
+    title: "HP AMD Ryzen 3",
     price: 529.99,
-    description: 'The Ryzen 3 is a more high-end processor that compares to the Intel Core i3.',
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400',
-    category: 'Laptops',
-    subcategory: 'HP',
+    description:
+      "The Ryzen 3 is a more high-end processor that compares to the Intel Core i3.",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400",
+    category: "Laptops",
+    subcategory: "HP",
     variants: [
-      { ram: '4 GB', price: 529.99, quantity: 15 },
-      { ram: '8 GB', price: 629.99, quantity: 7 }
+      { ram: "4 GB", price: 529.99, quantity: 15 },
+      { ram: "8 GB", price: 629.99, quantity: 7 },
     ],
     inStock: true,
-    rating: 4.5
-  }
+    rating: 4.5,
+  },
 ];
 
 const initialCategories: Category[] = [
   {
-    id: '1',
-    name: 'Laptops',
-    subcategories: ['HP', 'Dell', 'Lenovo']
+    id: "1",
+    name: "Laptops",
+    subcategories: ["HP", "Dell", "Lenovo"],
   },
   {
-    id: '2',
-    name: 'Tablets',
-    subcategories: ['iPad', 'Samsung', 'Microsoft']
+    id: "2",
+    name: "Tablets",
+    subcategories: ["iPad", "Samsung", "Microsoft"],
   },
   {
-    id: '3',
-    name: 'Headphones',
-    subcategories: ['Sony', 'Bose', 'Apple']
-  }
+    id: "3",
+    name: "Headphones",
+    subcategories: ["Sony", "Bose", "Apple"],
+  },
 ];
 
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
@@ -102,41 +105,27 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const addProduct = async (data: ProductFormData) => {
+  const addProduct = async (data: ProductFormData, images?: File[]) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       if (!data.title.trim()) {
-        throw new Error('Product title is required');
+        throw new Error("Product title is required");
       }
-      
+
       if (data.price <= 0) {
-        throw new Error('Price must be greater than 0');
+        throw new Error("Price must be greater than 0");
       }
-      
+
       if (!data.category) {
-        throw new Error('Category is required');
+        throw new Error("Category is required");
       }
-      
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        title: data.title,
-        price: data.price,
-        description: data.description,
-        image: data.image || 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400',
-        category: data.category,
-        subcategory: data.subcategory,
-        variants: data.variants,
-        inStock: true,
-        rating: 0
-      };
-      
-      setProducts(prev => [...prev, newProduct]);
+
+      const newProduct = await apiService.addProduct(data, images);
+      setProducts((prev) => [...prev, newProduct]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add product');
+      setError(err instanceof Error ? err.message : "Failed to add product");
     } finally {
       setIsLoading(false);
     }
@@ -145,17 +134,17 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const updateProduct = async (id: string, data: ProductFormData) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setProducts(prev => prev.map(product => 
-        product.id === id 
-          ? { ...product, ...data }
-          : product
-      ));
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      setProducts((prev) =>
+        prev.map((product) =>
+          product.id === id ? { ...product, ...data } : product
+        )
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update product');
+      setError(err instanceof Error ? err.message : "Failed to update product");
     } finally {
       setIsLoading(false);
     }
@@ -164,12 +153,12 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const deleteProduct = async (id: string) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProducts(prev => prev.filter(product => product.id !== id));
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setProducts((prev) => prev.filter((product) => product.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete product');
+      setError(err instanceof Error ? err.message : "Failed to delete product");
     } finally {
       setIsLoading(false);
     }
@@ -178,23 +167,16 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const addCategory = async (name: string) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       if (!name.trim()) {
-        throw new Error('Category name is required');
+        throw new Error("Category name is required");
       }
-      
-      const newCategory: Category = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        subcategories: []
-      };
-      
-      setCategories(prev => [...prev, newCategory]);
+
+      const newCategory = await apiService.addCategory({ name: name.trim() });
+      setCategories((prev) => [...prev, newCategory]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add category');
+      setError(err instanceof Error ? err.message : "Failed to add category");
     } finally {
       setIsLoading(false);
     }
@@ -203,21 +185,26 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const addSubcategory = async (categoryId: string, name: string) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       if (!name.trim()) {
-        throw new Error('Subcategory name is required');
+        throw new Error("Subcategory name is required");
       }
-      
-      setCategories(prev => prev.map(category => 
-        category.id === categoryId 
-          ? { ...category, subcategories: [...category.subcategories, name.trim()] }
-          : category
-      ));
+
+      const updatedCategory = await apiService.addSubCategory({
+        categoryId,
+        name: name.trim(),
+      });
+
+      setCategories((prev) =>
+        prev.map((category) =>
+          category.id === categoryId ? updatedCategory : category
+        )
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add subcategory');
+      setError(
+        err instanceof Error ? err.message : "Failed to add subcategory"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -228,14 +215,14 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       id: `${product.id}-${variant.ram}`,
       product,
       variant,
-      quantity
+      quantity,
     };
-    
-    setCart(prev => {
-      const existingItem = prev.find(item => item.id === cartItem.id);
+
+    setCart((prev) => {
+      const existingItem = prev.find((item) => item.id === cartItem.id);
       if (existingItem) {
-        return prev.map(item => 
-          item.id === cartItem.id 
+        return prev.map((item) =>
+          item.id === cartItem.id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
@@ -245,7 +232,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(item => item.id !== id));
+    setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
   const clearError = () => {
@@ -267,7 +254,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         addSubcategory,
         addToCart,
         removeFromCart,
-        clearError
+        clearError,
       }}
     >
       {children}

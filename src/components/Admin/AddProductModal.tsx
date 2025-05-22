@@ -1,8 +1,7 @@
-
-import React, { useState } from 'react';
-import { useProduct } from '../../context/ProductContext';
-import { ProductFormData, ProductVariant } from '../../types';
-import { FaTimes, FaPlus } from 'react-icons/fa';
+import React, { useState } from "react";
+import { useProduct } from "../../context/ProductContext";
+import { ProductFormData, ProductVariant } from "../../types";
+import { FaTimes, FaPlus } from "react-icons/fa";
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -12,60 +11,67 @@ interface AddProductModalProps {
 const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
   const { addProduct, categories, isLoading, error, clearError } = useProduct();
   const [formData, setFormData] = useState<ProductFormData>({
-    title: '',
+    title: "",
     price: 0,
-    description: '',
-    category: '',
-    subcategory: '',
-    variants: [{ ram: '4 GB', price: 0, quantity: 0 }],
-    image: ''
+    description: "",
+    category: "",
+    subcategory: "",
+    variants: [{ ram: "4 GB", price: 0, quantity: 0 }],
+    image: "",
   });
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    
+
     try {
       await addProduct(formData);
       onClose();
       setFormData({
-        title: '',
+        title: "",
         price: 0,
-        description: '',
-        category: '',
-        subcategory: '',
-        variants: [{ ram: '4 GB', price: 0, quantity: 0 }],
-        image: ''
+        description: "",
+        category: "",
+        subcategory: "",
+        variants: [{ ram: "4 GB", price: 0, quantity: 0 }],
+        image: "",
       });
     } catch (err) {
-      console.error('Failed to add product:', err);
+      console.error("Failed to add product:", err);
     }
   };
 
   const addVariant = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      variants: [...prev.variants, { ram: '4 GB', price: 0, quantity: 0 }]
+      variants: [...prev.variants, { ram: "4 GB", price: 0, quantity: 0 }],
     }));
   };
 
-  const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
-    setFormData(prev => ({
+  const updateVariant = (
+    index: number,
+    field: keyof ProductVariant,
+    value: string | number
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      variants: prev.variants.map((variant, i) => 
+      variants: prev.variants.map((variant, i) =>
         i === index ? { ...variant, [field]: value } : variant
-      )
+      ),
     }));
   };
 
   const removeVariant = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      variants: prev.variants.filter((_, i) => i !== index)
+      variants: prev.variants.filter((_, i) => i !== index),
     }));
   };
 
-  const selectedCategory = categories.find(cat => cat.name === formData.category);
+  const selectedCategory = categories.find(
+    (cat) => cat.name === formData.category
+  );
 
   if (!isOpen) return null;
 
@@ -75,10 +81,7 @@ const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold">Add Product</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded">
               <FaTimes />
             </button>
           </div>
@@ -89,22 +92,33 @@ const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Variants :</label>
+              <label className="block text-sm font-medium mb-1">
+                Variants :
+              </label>
               <div className="space-y-3">
                 {formData.variants.map((variant, index) => (
-                  <div key={index} className="flex items-center space-x-3 bg-gray-50 p-3 rounded">
+                  <div
+                    key={index}
+                    className="flex items-center space-x-3 bg-gray-50 p-3 rounded"
+                  >
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">Ram:</label>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Ram:
+                      </label>
                       <select
                         value={variant.ram}
-                        onChange={(e) => updateVariant(index, 'ram', e.target.value)}
+                        onChange={(e) =>
+                          updateVariant(index, "ram", e.target.value)
+                        }
                         className="w-full px-2 py-1 border rounded text-sm"
                       >
                         <option>4 GB</option>
@@ -114,21 +128,37 @@ const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
                       </select>
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">Price:</label>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Price:
+                      </label>
                       <input
                         type="number"
                         step="0.01"
                         value={variant.price}
-                        onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          updateVariant(
+                            index,
+                            "price",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
                         className="w-full px-2 py-1 border rounded text-sm"
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">Qty:</label>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Qty:
+                      </label>
                       <input
                         type="number"
                         value={variant.quantity}
-                        onChange={(e) => updateVariant(index, 'quantity', parseInt(e.target.value) || 0)}
+                        onChange={(e) =>
+                          updateVariant(
+                            index,
+                            "quantity",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
                         className="w-full px-2 py-1 border rounded text-sm"
                       />
                     </div>
@@ -155,10 +185,18 @@ const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Sub category :</label>
+              <label className="block text-sm font-medium mb-1">
+                Sub category :
+              </label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value, subcategory: '' }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: e.target.value,
+                    subcategory: "",
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
                 required
               >
@@ -173,10 +211,17 @@ const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
 
             {selectedCategory && (
               <div>
-                <label className="block text-sm font-medium mb-1">Subcategory :</label>
+                <label className="block text-sm font-medium mb-1">
+                  Subcategory :
+                </label>
                 <select
                   value={formData.subcategory}
-                  onChange={(e) => setFormData(prev => ({ ...prev, subcategory: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      subcategory: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
                 >
                   <option value="">Select subcategory</option>
@@ -190,22 +235,33 @@ const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-1">Description :</label>
+              <label className="block text-sm font-medium mb-1">
+                Description :
+              </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
                 rows={3}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Upload Image :</label>
+              <label className="block text-sm font-medium mb-1">
+                Upload Image :
+              </label>
               <input
                 type="url"
                 placeholder="Enter image URL"
                 value={formData.image}
-                onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, image: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
@@ -222,7 +278,7 @@ const AddProductModal = ({ isOpen, onClose }: AddProductModalProps) => {
                 disabled={isLoading}
                 className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Adding...' : 'ADD'}
+                {isLoading ? "Adding..." : "ADD"}
               </button>
               <button
                 type="button"
